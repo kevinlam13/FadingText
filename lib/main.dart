@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fading Text',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
-      home: const FadingOpacityPage(),
+      home: FadingTextAnimation(),
     );
   }
 }
 
-class FadingOpacityPage extends StatefulWidget {
-  const FadingOpacityPage({super.key});
+class FadingTextAnimation extends StatefulWidget {
   @override
   State<FadingOpacityPage> createState() => _FadingOpacityPageState();
 }
@@ -28,10 +25,8 @@ class _FadingOpacityPageState extends State<FadingOpacityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fading (AnimatedOpacity)')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _toggle,
-        child: const Icon(Icons.play_arrow),
+      appBar: AppBar(
+        title: Text('Fading Text Animation'),
       ),
       body: Center(
         child: AnimatedOpacity(
