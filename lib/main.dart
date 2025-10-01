@@ -1,51 +1,48 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: FadingTextAnimation(),
+      title: 'Fading Text',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
+      home: const FadingOpacityPage(),
     );
   }
 }
 
-class FadingTextAnimation extends StatefulWidget {
+class FadingOpacityPage extends StatefulWidget {
+  const FadingOpacityPage({super.key});
   @override
-  _FadingTextAnimationState createState() => _FadingTextAnimationState();
+  State<FadingOpacityPage> createState() => _FadingOpacityPageState();
 }
 
-class _FadingTextAnimationState extends State<FadingTextAnimation> {
-  bool _isVisible = true;
-
-  void toggleVisibility() {
-    setState(() {
-      _isVisible = !_isVisible;
-    });
-  }
+class _FadingOpacityPageState extends State<FadingOpacityPage> {
+  bool _visible = true;
+  void _toggle() => setState(() => _visible = !_visible);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Fading Text Animation'),
+      appBar: AppBar(title: const Text('Fading (AnimatedOpacity)')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggle,
+        child: const Icon(Icons.play_arrow),
       ),
       body: Center(
         child: AnimatedOpacity(
-          opacity: _isVisible ? 1.0 : 0.0,
-          duration: Duration(seconds: 1),
-          child: Text(
+          opacity: _visible ? 1 : 0,
+          duration: const Duration(seconds: 1),
+          curve: Curves.easeInOut,
+          child: const Text(
             'Hello, Flutter!',
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: toggleVisibility,
-        child: Icon(Icons.play_arrow),
       ),
     );
   }
