@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() => runApp(const AppRoot());
 
@@ -19,24 +20,17 @@ class _AppRootState extends State<AppRoot> {
       title: 'Fading Text',
       debugShowCheckedModeBanner: false,
       themeMode: _mode,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.dark,
-      ),
-      home: HomeScreen(onToggleTheme: _toggleTheme),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo, brightness: Brightness.light),
+      darkTheme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo, brightness: Brightness.dark),
+      home: HomeScreen(onToggleTheme: _toggleTheme, isDark: _mode == ThemeMode.dark),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
-  const HomeScreen({super.key, required this.onToggleTheme});
+  final bool isDark;
+  const HomeScreen({super.key, required this.onToggleTheme, required this.isDark});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,85 +39,35 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _controller = PageController();
   Color _textColor = Colors.teal;
+  bool _showFrame = false;
 
   Future<void> _pickColor() async {
-    final palette = <Color>[
-      Colors.teal,
-      Colors.indigo,
-      Colors.red,
-      Colors.orange,
-      Colors.green,
-      Colors.blue,
-      Colors.purple,
-      Colors.pink,
-      Colors.brown,
-      Colors.cyan,
-      Colors.lime,
-      Colors.amber,
-      Colors.grey,
-      Colors.black,
-      Colors.white,
-    ];
-    Color selected = _textColor;
-
+    Color temp = _textColor;
     await showDialog(
       context: context,
-      builder: (_) {
-        Color tempSelected = selected;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Pick text color'),
-              content: SizedBox(
-                width: 260,
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  itemCount: palette.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 5,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemBuilder: (_, i) {
-                    final c = palette[i];
-                    final isSel = c.value == tempSelected.value;
-                    return InkWell(
-                      onTap: () => setDialogState(() => tempSelected = c),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: c,
-                          shape: BoxShape.circle,
-                          border: Border.all(width: isSel ? 3 : 1.5),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    setState(() => _textColor = tempSelected);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Select'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text('Pick text color'),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: temp,
+            onColorChanged: (c) => temp = c,
+            enableAlpha: false,
+            portraitOnly: true,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () { setState(() => _textColor = temp); Navigator.pop(context); },
+            child: const Text('Select'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fading Demo'),
@@ -132,15 +76,53 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Toggle theme',
             onPressed: widget.onToggleTheme,
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(widget.isDark ? Icons.light_mode : Icons.dark_mode),
           ),
         ],
       ),
-      body: PageView(
-        controller: _controller,
+      body: Column(
         children: [
-          FadingOpacityPage(textColor: _textColor),
-          FadingSwitcherPage(textColor: _textColor),
+          // rounded image + frame toggle
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: _showFrame ? Border.all(width: 3) : null,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Image.asset(
+                      'assets/images/my_photo.png',  // update if your name differs
+                      width: 220,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SwitchListTile(
+                    title: const Text('Show Frame'),
+                    value: _showFrame,
+                    onChanged: (v) => setState(() => _showFrame = v),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 0),
+          Expanded(
+            child: PageView(
+              controller: _controller,
+              children: [
+                FadingOpacityPage(textColor: _textColor),  // bugfix: now uses color
+                FadingSwitcherPage(textColor: _textColor),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -150,7 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
 class FadingOpacityPage extends StatefulWidget {
   final Color textColor;
   const FadingOpacityPage({super.key, required this.textColor});
-
   @override
   State<FadingOpacityPage> createState() => _FadingOpacityPageState();
 }
@@ -162,20 +143,15 @@ class _FadingOpacityPageState extends State<FadingOpacityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton:
-          FloatingActionButton(onPressed: _toggle, child: const Icon(Icons.play_arrow)),
+      floatingActionButton: FloatingActionButton(onPressed: _toggle, child: const Icon(Icons.play_arrow)),
       body: Center(
         child: AnimatedOpacity(
           opacity: _visible ? 1 : 0,
           duration: const Duration(seconds: 1),
           curve: Curves.easeInOut,
-          child: Text(
+          child: Text(                      // <-- removed const so color can change
             'Hello, Flutter!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              color: widget.textColor,
-            ),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: widget.textColor),
           ),
         ),
       ),
@@ -186,7 +162,6 @@ class _FadingOpacityPageState extends State<FadingOpacityPage> {
 class FadingSwitcherPage extends StatefulWidget {
   final Color textColor;
   const FadingSwitcherPage({super.key, required this.textColor});
-
   @override
   State<FadingSwitcherPage> createState() => _FadingSwitcherPageState();
 }
@@ -198,23 +173,17 @@ class _FadingSwitcherPageState extends State<FadingSwitcherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton:
-          FloatingActionButton(onPressed: _toggle, child: const Icon(Icons.play_arrow)),
+      floatingActionButton: FloatingActionButton(onPressed: _toggle, child: const Icon(Icons.play_arrow)),
       body: Center(
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 2500),
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (child, anim) =>
-              FadeTransition(opacity: anim, child: child),
+          transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
           child: Text(
             _showHello ? 'Hello, Flutter!' : 'Different Fade ✨',
             key: ValueKey(_showHello),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              color: widget.textColor,
-            ),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: widget.textColor),
           ),
         ),
       ),
